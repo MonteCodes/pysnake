@@ -6,12 +6,19 @@ from pygame.locals import *
 from snake import Snake
 from apple import Apple
 
-FRAMES_PER_SECOND = 20
-WINDOW_WIDTH = 1200
+
+WINDOW_WIDTH  = 1200
 WINDOW_HEIGHT = 800
-CELL_SIZE = 20
-CELL_WIDTH = int(WINDOW_WIDTH / CELL_SIZE)
+
+CELL_SIZE   = 20
+CELL_WIDTH  = int(WINDOW_WIDTH / CELL_SIZE)
 CELL_HEIGHT = int(WINDOW_HEIGHT / CELL_SIZE)
+
+# The four possible frame rates/speeds
+SLOW   = 10
+MEDIUM = 15
+FAST   = 25
+WHY    = 60
 
 #               R    G    B
 WHITE       = (255, 255, 255)
@@ -23,12 +30,11 @@ DARK_GRAY   = ( 40,  40,  40)
 
 BACKGROUND_COLOR = BLACK
 
-UP = 'up'
-DOWN = 'down'
-LEFT = 'left'
+# The directions
+UP    = 'up'
+DOWN  = 'down'
+LEFT  = 'left'
 RIGHT = 'right'
-
-HEAD = 0
 
 
 def main():
@@ -42,12 +48,14 @@ def main():
     pygame.display.set_caption('Snake')
 
     show_start_screen()
+    frames_per_second = show_speed_menu()
     while True:
-        run_game()
-        show_game_over_screen()
+        run_game(frames_per_second)
+        if show_game_over_screen():
+            frames_per_second = show_speed_menu()
 
 
-def run_game():
+def run_game(fps):
     """Runs the game."""
     snake = Snake(CELL_WIDTH, CELL_HEIGHT)
     apple = Apple(CELL_WIDTH, CELL_HEIGHT)
@@ -71,20 +79,25 @@ def run_game():
         apple.draw(DISPLAY_SURFACE, CELL_SIZE)
         draw_score(len(snake.coords) - 3)
         pygame.display.update()
-        FPS_CLOCK.tick(FRAMES_PER_SECOND)
+        FPS_CLOCK.tick(fps)
 
 
 def check_for_key_press():
     """Checks for user keyboard activity."""
-    if len(pygame.event.get(QUIT)) > 0:
-        terminate()
+    for event in pygame.event.get():
+        if event.type == KEYUP:
+            return True
+        if event.type == QUIT:
+            terminate()
+    return False
 
-    key_up_events = pygame.event.get(KEYUP)
-    if len(key_up_events) == 0:
-        return None
-    if key_up_events[0] == K_ESCAPE:
-        terminate()
-    return key_up_events[0]
+
+def check_for_mouse_click():
+    """Checks for user keyboard activity."""
+    for event in pygame.event.get():
+        if event.type == MOUSEBUTTONDOWN:
+            return pygame.mouse.get_pos()
+    return 0, 0
 
 
 def check_for_movement(snake):
@@ -131,9 +144,57 @@ def show_start_screen():
             pygame.event.get()
             return
         pygame.display.update()
-        FPS_CLOCK.tick(FRAMES_PER_SECOND)
+        FPS_CLOCK.tick(20)
         degrees_one += 3
         degrees_two += 7
+
+
+def show_speed_menu():
+    """Displays the menu screen of the game and lets the player choose game speed."""
+    main_menu_font = pygame.font.Font('freesansbold.ttf', 50)
+    main_menu_surface = main_menu_font.render('Menu:', True, WHITE, DARK_GREEN)
+    main_menu_rect = main_menu_surface.get_rect()
+    main_menu_rect.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4)
+
+    sub_menu_font = pygame.font.Font('freesansbold.ttf', 30)
+
+    sub_menu_surface_one = sub_menu_font.render('Slow', True, WHITE)
+    sub_menu_rect_one = sub_menu_surface_one.get_rect()
+    sub_menu_rect_one.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 + 50)
+
+    sub_menu_surface_two = sub_menu_font.render('Medium', True, WHITE)
+    sub_menu_rect_two = sub_menu_surface_two.get_rect()
+    sub_menu_rect_two.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 + 100)
+
+    sub_menu_surface_three = sub_menu_font.render('Fast', True, WHITE)
+    sub_menu_rect_three = sub_menu_surface_three.get_rect()
+    sub_menu_rect_three.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 + 150)
+
+    sub_menu_surface_four = sub_menu_font.render('Are You Sure About This?', True, WHITE)
+    sub_menu_rect_four = sub_menu_surface_four.get_rect()
+    sub_menu_rect_four.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 4 + 200)
+
+    while True:
+        DISPLAY_SURFACE.fill(BACKGROUND_COLOR)
+
+        DISPLAY_SURFACE.blit(main_menu_surface, main_menu_rect)
+        DISPLAY_SURFACE.blit(sub_menu_surface_one, sub_menu_rect_one)
+        DISPLAY_SURFACE.blit(sub_menu_surface_two, sub_menu_rect_two)
+        DISPLAY_SURFACE.blit(sub_menu_surface_three, sub_menu_rect_three)
+        DISPLAY_SURFACE.blit(sub_menu_surface_four, sub_menu_rect_four)
+
+        mouse_loc = check_for_mouse_click()
+        if mouse_loc != (0, 0):
+            if sub_menu_rect_one.collidepoint(mouse_loc):
+                return SLOW
+            elif sub_menu_rect_two.collidepoint(mouse_loc):
+                return MEDIUM
+            elif sub_menu_rect_three.collidepoint(mouse_loc):
+                return FAST
+            elif sub_menu_rect_four.collidepoint(mouse_loc):
+                return WHY
+
+        pygame.display.update()
 
 
 def show_game_over_screen():
@@ -151,19 +212,27 @@ def show_game_over_screen():
     DISPLAY_SURFACE.blit(game_surface, game_rect)
     DISPLAY_SURFACE.blit(over_surface, over_rect)
     draw_press_key_message()
+
+    settings_surface = BASIC_FONT.render('Change settings', True, WHITE)
+    settings_rect = settings_surface.get_rect()
+    settings_rect.topright = (175, WINDOW_HEIGHT - 30)
+    DISPLAY_SURFACE.blit(settings_surface, settings_rect)
+
     pygame.display.update()
     pygame.time.wait(500)
     check_for_key_press()
 
     while True:
+        if settings_rect.collidepoint(check_for_mouse_click()):
+            return True
         if check_for_key_press():
             pygame.event.get()
-            return
+            return False
 
 
 def draw_press_key_message():
     """Displays the message to press a key."""
-    press_key_surface = BASIC_FONT.render('Press a key to play.', True, WHITE)
+    press_key_surface = BASIC_FONT.render('Press any key to play.', True, WHITE)
     press_key_rect = press_key_surface.get_rect()
     press_key_rect.topleft = (WINDOW_WIDTH - 200, WINDOW_HEIGHT - 30)
     DISPLAY_SURFACE.blit(press_key_surface, press_key_rect)

@@ -1,4 +1,3 @@
-import random
 import pygame
 import sys
 
@@ -33,6 +32,7 @@ HEAD = 0
 
 
 def main():
+    """The main game loop."""
     global FPS_CLOCK, DISPLAY_SURFACE, BASIC_FONT
 
     pygame.init()
@@ -48,6 +48,7 @@ def main():
 
 
 def run_game():
+    """Runs the game."""
     snake = Snake(CELL_WIDTH, CELL_HEIGHT)
     apple = Apple(CELL_WIDTH, CELL_HEIGHT)
 
@@ -74,7 +75,11 @@ def run_game():
 
 
 def check_for_key_press():
-    key_up_events = pygame.event.get()
+    """Checks for user keyboard activity."""
+    if len(pygame.event.get(QUIT)) > 0:
+        terminate()
+
+    key_up_events = pygame.event.get(KEYUP)
     if len(key_up_events) == 0:
         return None
     if key_up_events[0] == K_ESCAPE:
@@ -83,6 +88,7 @@ def check_for_key_press():
 
 
 def check_for_movement(snake):
+    """Checks for arrow key or WASD-key events."""
     for event in pygame.event.get():
         if event.type == QUIT:
             terminate()
@@ -98,6 +104,7 @@ def check_for_movement(snake):
 
 
 def show_start_screen():
+    """Displays the start screen of the game."""
     title_font = pygame.font.Font('freesansbold.ttf', 100)
     title_surface_one = title_font.render('Snake!', True, WHITE, DARK_GREEN)
     title_surface_two = title_font.render('Snake!', True, GREEN)
@@ -130,15 +137,16 @@ def show_start_screen():
 
 
 def show_game_over_screen():
+    """Displays the game over screen."""
     game_over_font = pygame.font.Font('freesansbold.ttf', 150)
 
     game_surface = game_over_font.render('GAME', True, WHITE)
     game_rect = game_surface.get_rect()
-    game_rect.midtop = (WINDOW_WIDTH / 2, 10)
+    game_rect.midtop = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 - 150)
 
     over_surface = game_over_font.render('OVER', True, WHITE)
     over_rect = over_surface.get_rect()
-    over_rect.midtop = (WINDOW_WIDTH / 2, game_rect.height + 35)
+    over_rect.midtop = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 50)
 
     DISPLAY_SURFACE.blit(game_surface, game_rect)
     DISPLAY_SURFACE.blit(over_surface, over_rect)
@@ -154,6 +162,7 @@ def show_game_over_screen():
 
 
 def draw_press_key_message():
+    """Displays the message to press a key."""
     press_key_surface = BASIC_FONT.render('Press a key to play.', True, WHITE)
     press_key_rect = press_key_surface.get_rect()
     press_key_rect.topleft = (WINDOW_WIDTH - 200, WINDOW_HEIGHT - 30)
@@ -161,6 +170,7 @@ def draw_press_key_message():
 
 
 def draw_grid():
+    """Draws the board grid of cells."""
     for x in range(0, WINDOW_WIDTH, CELL_SIZE):
         pygame.draw.line(DISPLAY_SURFACE, DARK_GRAY, (x, 0), (x, WINDOW_HEIGHT))
     for y in range(0, WINDOW_HEIGHT, CELL_SIZE):
@@ -168,6 +178,7 @@ def draw_grid():
 
 
 def draw_score(score):
+    """Displays the current player score."""
     score_surface = BASIC_FONT.render('Score: %s' % score, True, WHITE)
     score_rect = score_surface.get_rect()
     score_rect.topleft = (WINDOW_WIDTH - 120, 10)
@@ -175,6 +186,7 @@ def draw_score(score):
 
 
 def terminate():
+    """Ends the game."""
     pygame.quit()
     sys.exit()
 
